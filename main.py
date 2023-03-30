@@ -1,6 +1,6 @@
 import tkinter as tk
 from PIL import ImageTk, Image
-
+import serial.tools.list_ports
 
 
 
@@ -46,8 +46,8 @@ LastNameEntryField.bind('<FocusIn>', on_entry_clickLast)
 LastNameEntryField.pack(pady = 20)
 
 #destroy current frame
-def quit():
-    
+
+
 
 
 
@@ -77,6 +77,7 @@ def checkData():
 
             #Check if the fields match the document data
             if firstNameEntryField.get() == first_name and LastNameEntryField.get() == last_name:
+                root.destroy()
                 from dashboard import StartProgram
                 StartProgram()
 
