@@ -1,114 +1,105 @@
 import tkinter as tk
-from PIL import ImageTk, Image
-import serial.tools.list_ports
-
-
-
-
-
+from tkinter import messagebox
+import firebase_admin
+from firebase_admin import credentials, firestore, auth
 
 root = tk.Tk()
-#creating an instance of the window frame
 
-image = Image.open("jakub-pabis-lQknQP3R1yc-unsplash.jpg")
-bg_image = ImageTk.PhotoImage(image)
-background_label = tk.Label(root, image=bg_image)
-background_label.place(x=0, y=0, relwidth=1, relheight=1)
+# Create new user
+def on_entry_click(event, entry):
+    if entry.get() == "Enter Your {} here".format(entry.name):
+        entry.delete(0, "end") # delete all the text in the entry
+        entry.insert(0, '') #Insert blank for user input
 
-root.geometry("" + str(root.winfo_screenwidth()) + "x" + str(root.winfo_screenheight()) + "")
-root.title("Feeding and Lighting System")
-label = tk.Label(root, text="Welcome to Light and Feeding Management System", font=('Times New Roman', 40, 'bold'))
-label.pack(padx=20, pady=50)
+class EntryWithPlaceholder(tk.Entry):
+    def __init__(self, master=None, placeholder="", **kwargs):
+        super().__init__(master, **kwargs)
+        self.placeholder = placeholder
+        self.bind('<FocusIn>', self.on_entry_click)
+        self.bind('<FocusOut>', self.on_focus_out)
+        self.insert(0, self.placeholder)
+        self.config(fg='grey')
 
+    def on_entry_click(self, event):
+        if self.get() == self.placeholder:
+            self.delete(0, "end")
+            self.config(fg='black')
 
-#entry field for first name
-#disappearing words when focus in on target field FirstName
-def on_entry_click(event):
-   if firstNameEntryField.get() == "Enter Your FirstName here":
-       firstNameEntryField.delete(0, "end") # delete all the text in the entry
-       firstNameEntryField.insert(0, '') #Insert blank for user input
+    def on_focus_out(self, event):
+        if not self.get():
+            self.insert(0, self.placeholder)
+            self.config(fg='grey')
 
+# First name entry
+firstname = EntryWithPlaceholder(root, name="firstName", width=30, font=('Times New Roman', 30), placeholder="Enter Your FirstName here")
+firstname.pack()
 
-firstNameEntryField = tk.Entry(root, width=30, font=('Times New Roman', 30))
-firstNameEntryField.insert(0, "Enter Your FirstName here")
-firstNameEntryField.bind('<FocusIn>', on_entry_click)
-firstNameEntryField.pack()
+# Last name entry
+lastname = EntryWithPlaceholder(root, name="lastName", width=30, font=('Times New Roman', 30), placeholder="Enter Your LastName here")
+lastname.pack(pady=20)
 
-#disappearing words when focus in on target field LastName
-def on_entry_clickLast(event):
-    if LastNameEntryField.get() == "Enter Your LastName here":
-       LastNameEntryField.delete(0, "end")
-       LastNameEntryField.insert(0, '')
-#entry field for last name
-LastNameEntryField = tk.Entry(root, width=30, font=('Times New Roman', 30))
-LastNameEntryField.insert(0, "Enter Your LastName here")
-LastNameEntryField.bind('<FocusIn>', on_entry_clickLast)
-LastNameEntryField.pack(pady = 20)
-
-#destroy current frame
-
+# Email entry
+email = EntryWithPlaceholder(root, name="email", width=30, font=('Times New Roman', 30), placeholder="Enter Your Email here")
+email.pack(pady=20)
 
 
-
-
-
-#button functionality
-def checkData():
-    import firebase_admin
-    from firebase_admin import credentials, firestore
-
+# Sign up function
+def signUp():
     # Initialize Firebase app
-    cred = credentials.Certificate("C:\\Users\\Makoba Ngulube\\Desktop\\Project\\FinalYearProject\\finalyearproject-33d65-firebase-adminsdk-56scw-68db4b5227.json")
-    firebase_admin.initialize_app(cred)
+    # Check if Firebase app has already been initialized
+    if not firebase_admin._apps:
+        cred = credentials.Certificate("C:\\Users\\Makoba Ngulube\\Desktop\\Project\\FinalYearProject\\finalyearproject-33d65-firebase-adminsdk-56scw-68db4b5227.json")
+        firebase_admin.initialize_app(cred)
+
     db = firestore.client()
 
-    # Retrieve data from Firestore
-    doc_ref = db.collection("admins").document("names")
-    doc = doc_ref.get()
+        # Check if any input fields are empty
+    if not firstname.get() or not lastname.get() or not email.get():
+        messagebox.showerror("Error", "All fields are required.")
+        return
+    try:
+        user = auth.create_user(
+            email=email.get(),
+            password="password123", # Set a default password
+            display_name=firstname.get() + " " + lastname.get()
+        )
+        print("Successfully created new user: {0}".format(user.uid))
 
-    # Check if document exists
-    if doc.exists:
-        data = doc.to_dict()
-        first_name = data.get('firstname')
-        last_name = data.get('lastname')
+        # Store user data in Firestore
+        user_ref = db.collection("admins").document(user.uid)
+        user_ref.set({
+            "firstname": firstname.get(),
+            "lastname": lastname.get(),
+            "email": email.get()
+        })
+        print("Successfully stored user data in Firestore")
 
-        # Check if fields exist and are not empty
-        if first_name and last_name and firstNameEntryField.get() and LastNameEntryField.get():
 
-            #Check if the fields match the document data
-            if firstNameEntryField.get() == first_name and LastNameEntryField.get() == last_name:
-                root.destroy()
-                from dashboard import StartProgram
-                StartProgram()
+    except Exception as e:
+        print("Error creating new user:", e)
 
-            else:
-                popup = tk.Toplevel()
-                popup.title("Response")
-                popup.geometry("350x350")
-                label = tk.Label(popup, text="Invalid name")
-                label.pack()
-                button = tk.Button(popup, text="close", command=popup.destroy)
-                button.pack()
-        else:
-            popup = tk.Toplevel()
-            popup.title("Response")
-            popup.geometry("350x350")
-            label = tk.Label(popup, text="Missing name fields")
-            label.pack()
-            button = tk.Button(popup, text="close", command=popup.destroy)
-            button.pack()
-    else:
-        popup = tk.Toplevel()
-        popup.title("Response")
-        popup.geometry("350x350")
-        label = tk.Label(popup, text="Document not found")
-        label.pack()
-        button = tk.Button(popup, text="close", command=popup.destroy)
-        button.pack()
 
-#button to log into system
-button = tk.Button(root, text="Login", font=('Arial', 18), bg="grey", command=checkData)
-button.pack()
+
+
+
+
+def login():
+    root.destroy()
+    from login import beginProgramExecution
+    beginProgramExecution()
+
+
+
+
+button_frame = tk.Frame(root)
+button_frame.pack()
+
+# Sign up button
+button = tk.Button(button_frame, text="Sign Up", font=('Arial', 18), bg="grey", command=signUp)
+button.pack(side=tk.LEFT)
+
+# Login button
+login_button = tk.Button(button_frame, text="Login", font=('Arial', 18), bg="grey", command=login)
+login_button.pack(side=tk.LEFT, padx=10) # Add some padding between the buttons
 
 root.mainloop()
-
