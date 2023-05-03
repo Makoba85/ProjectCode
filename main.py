@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
+from login import beginProgramExecution
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
 
@@ -54,7 +55,7 @@ def signUp():
     db = firestore.client()
 
         # Check if any input fields are empty
-    if not firstname.get() or not lastname.get() or not email.get():
+    if not firstname.get() or not lastname.get() or not email.get() or firstname.get() == firstname.placeholder or lastname.get() == lastname.placeholder or email.get() == email.placeholder:
         messagebox.showerror("Error", "All fields are required.")
         return
     try:
@@ -72,20 +73,16 @@ def signUp():
             "lastname": lastname.get(),
             "email": email.get()
         })
-        print("Successfully stored user data in Firestore")
-
+        messagebox.showinfo("Registration Status" , "Registration successful")
+        root.destroy()
+        beginProgramExecution()
 
     except Exception as e:
-        print("Error creating new user:", e)
-
-
-
-
+        messagebox.showerror("Registration Status", "Error creating new user:"+str(e))
 
 
 def login():
     root.destroy()
-    from login import beginProgramExecution
     beginProgramExecution()
 
 

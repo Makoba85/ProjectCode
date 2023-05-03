@@ -1,12 +1,13 @@
+#all the import statements
 import tkinter as tk
 from PIL import ImageTk, Image
 import serial.tools.list_ports
+from dashboard import StartProgram
 
 def beginProgramExecution():
 
-
-    root = tk.Tk()
     # creating an instance of the window frame
+    root = tk.Tk()
 
     image = Image.open("jakub-pabis-lQknQP3R1yc-unsplash.jpg")
     bg_image = ImageTk.PhotoImage(image)
@@ -20,27 +21,39 @@ def beginProgramExecution():
 
     # entry field for first name
     # disappearing words when focus in on target field FirstName
-    def on_entry_click(event):
-        if firstNameEntryField.get() == "Enter Your FirstName here":
-            firstNameEntryField.delete(0, "end")  # delete all the text in the entry
-            firstNameEntryField.insert(0, '')  # Insert blank for user input
+    def on_entry_click(event, entry):
+        if entry.get() == "Enter Your {} here".format(entry.name):
+            entry.delete(0, "end")  # delete all the text in the entry
+            entry.insert(0, '')  # Insert blank for user input
 
-    firstNameEntryField = tk.Entry(root, width=30, font=('Times New Roman', 30))
-    firstNameEntryField.insert(0, "Enter Your FirstName here")
-    firstNameEntryField.bind('<FocusIn>', on_entry_click)
+    class EntryWithPlaceholder(tk.Entry):
+        def __init__(self, master=None, placeholder="", **kwargs):
+            super().__init__(master, **kwargs)
+            self.placeholder = placeholder
+            self.bind('<FocusIn>', self.on_entry_click)
+            self.bind('<FocusOut>', self.on_focus_out)
+            self.insert(0, self.placeholder)
+            self.config(fg='grey')
+
+        def on_entry_click(self, event):
+            if self.get() == self.placeholder:
+                self.delete(0, "end")
+                self.config(fg='black')
+
+        def on_focus_out(self, event):
+            if not self.get():
+                self.insert(0, self.placeholder)
+                self.config(fg='grey')
+
+    firstNameEntryField = EntryWithPlaceholder(root, name="firstNameEntryField",width=30, font=('Times New Roman', 30), placeholder="Enter your firstname here")
     firstNameEntryField.pack()
 
     # disappearing words when focus in on target field LastName
-    def on_entry_clickLast(event):
-        if EmailEntryField.get() == "Enter Your Email here":
-            EmailEntryField.delete(0, "end")
-            EmailEntryField.insert(0, '')
+
 
     # entry field for last name
-    EmailEntryField = tk.Entry(root, width=30, font=('Times New Roman', 30))
-    EmailEntryField.insert(0, "Enter Your Email here")
-    EmailEntryField.bind('<FocusIn>', on_entry_clickLast)
-    EmailEntryField.pack(pady=20)
+    EmailEntryField = EntryWithPlaceholder(root, name="email", width=30, font=('Times New Roman', 30), placeholder="Enter your email here")
+    EmailEntryField.pack()
 
     # destroy current frame
 
@@ -74,7 +87,6 @@ def beginProgramExecution():
                 # Check if the fields match the document data
                 if firstNameEntryField.get() == first_name and EmailEntryField.get() == email:
                     root.destroy()
-                    from dashboard import StartProgram
                     StartProgram()
 
                 else:
