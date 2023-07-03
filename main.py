@@ -4,7 +4,22 @@ from login import beginProgramExecution
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
 
+backgroundcolor = '#90EE90'
 root = tk.Tk()
+root.configure(bg=backgroundcolor)
+root.geometry("500x400") # Set the size of the root window
+root.resizable(False, False) # Disable resizing of the window
+root.title("Registration Form") # Set the title of the window
+root.attributes('-alpha', 2) # Set the opacity of the window
+
+# Set the border radius of the root window
+root.configure(borderwidth=10, relief="ridge")
+
+# Add label at the top of the frame
+title_label = tk.Label(root, text="Sign Up/Login", font=('Arial', 24, 'bold'), bg=backgroundcolor)
+title_label.pack(pady=20)
+
+
 
 # Create new user
 def on_entry_click(event, entry):
@@ -43,13 +58,17 @@ lastname.pack(pady=20)
 email = EntryWithPlaceholder(root, name="email", width=30, font=('Times New Roman', 30), placeholder="Enter Your Email here")
 email.pack(pady=20)
 
+#text widget for displaying the text
+text_label = tk.Label(root, text='Click the login if you already have an account', font=('Arial', 14), bg=backgroundcolor)
+text_label.pack(padx=15)
+
 
 # Sign up function
 def signUp():
     # Initialize Firebase app
     # Check if Firebase app has already been initialized
     if not firebase_admin._apps:
-        cred = credentials.Certificate("C:\\Users\\Makoba Ngulube\\Desktop\\Project\\FinalYearProject\\finalyearproject-33d65-firebase-adminsdk-56scw-68db4b5227.json")
+        cred = credentials.Certificate("C:\\Users\\Makoba Ngulube\\Desktop\\Project\\FinalYearProject\\fir-vue-72fd8-firebase-adminsdk-ibkku-05e683ef03.json")
         firebase_admin.initialize_app(cred)
 
     db = firestore.client()
@@ -60,18 +79,18 @@ def signUp():
         return
     try:
         user = auth.create_user(
-            email=email.get(),
-            password="password123", # Set a default password
-            display_name=firstname.get() + " " + lastname.get()
+            email=email.get().lower(),
+            # password="password123", # Set a default password
+            display_name=firstname.get().lower() + " " + lastname.get().lower()
         )
         print("Successfully created new user: {0}".format(user.uid))
 
         # Store user data in Firestore
         user_ref = db.collection("admins").document(user.uid)
         user_ref.set({
-            "firstname": firstname.get(),
-            "lastname": lastname.get(),
-            "email": email.get()
+            "firstname": firstname.get().lower(),
+            "lastname": lastname.get().lower(),
+            "email": email.get().lower()
         })
         messagebox.showinfo("Registration Status" , "Registration successful")
         root.destroy()
@@ -85,15 +104,12 @@ def login():
     root.destroy()
     beginProgramExecution()
 
-
-
-
 button_frame = tk.Frame(root)
 button_frame.pack()
 
 # Sign up button
 button = tk.Button(button_frame, text="Sign Up", font=('Arial', 18), bg="grey", command=signUp)
-button.pack(side=tk.LEFT)
+button.pack(side=tk.LEFT, padx=10)
 
 # Login button
 login_button = tk.Button(button_frame, text="Login", font=('Arial', 18), bg="grey", command=login)

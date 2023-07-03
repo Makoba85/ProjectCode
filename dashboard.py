@@ -1,68 +1,72 @@
 import tkinter as tk
 from tkinter import *
 import serial
+import serial.tools.list_ports
 
 def StartProgram():
-    #create an instance of the frame
     root = tk.Tk()
+    root.configure(bg='lightblue')
+    root.geometry(f"{root.winfo_screenwidth()}x{root.winfo_screenheight()}")
+    root.title("Dashboard")
 
-    #giving the frame its geometric parameters
-    root.geometry("1368x768")
-
-    #frame title
-    root.title("Feeding and Lighting System")
-
-    #label for text within the frame
-    label = tk.Label(root, text="Welcome to Light and Feeding Management System Dashboard", font=('Times New Roman', 25, 'bold'))
-
-    # logout functionality
-    def logout():
-        root.destroy()
-
-    #logout button
-    logoutButton = tk.Button(root, text="Logout", font=('Times New Roman', 12, 'bold'), command=logout)
-    logoutButton.pack(padx=70, pady=0)
-
-
-
-
-    #set label positioning for x and y axis
+    label = tk.Label(root, text="Welcome to Light and Feeding Management System User Interface", font=('Times New Roman', 25, 'bold'),bg='wheat', borderwidth=3, relief="groove", highlightthickness=3, highlightbackground="white")
     label.pack(padx=20, pady=50)
 
-    #drop down menu options list
-    options = ["1 - 6 weeks old", "7 - 8 weeks old", "9 - 12 weeks old", "Above 12 weeks old"]
-    #set the dropdown menu to the frame
-    var = StringVar(root)
-    #set default text for the dropdown menu
-    var.set("Enter Chicken Age")
+    # Define a list of options
+    options = ["1 - 4 weeks", "5 - 8 weeks", "Above 8 weeks"]
 
-    #create an options menu and add the dropdown to the current frame. Set all the options from the options variable as the optins for the dropdown menu
+
+
+
+
+    # Create a variable to store the selected option
+    var = StringVar(root)
+    var.set(options[0])  # Set the default selected option
+
     dropdown_menu = OptionMenu(root, var, *options)
-    #add the dropdown menu to the frame
+
+    # Place the options menu widget in the root window
     dropdown_menu.pack()
 
+    #checking the selected option
     def start():
         selectedOption = var.get()
-        print("Selected Option: ", selectedOption)
+        print('You selected '+selectedOption)
 
-        if selectedOption == options[1]:
-            serialInst = serial.Serial();
-            serialInst.baudrate = 9600
-            serialInst.port = 'COM12'
-            serialInst.open()
-            # create label outside of loop
-            label = tk.Label(root, text="Light is OFF", font=('Times New Roman', 12, 'bold'))
-            label.pack(padx=10, pady=0)
+        if(selectedOption == 'Above 8 weeks'):
+            # Configure the serial port
+            ser = serial.Serial('COM12', 9600, timeout=1)
+
             while True:
-                if serialInst.in_waiting > 0:
-                    packet = serialInst.readline().decode('utf')
-                    if "ON" in packet:
-                        ledState = "ON"
-                    else:
-                        ledState = "OFF"
-                    # update label text instead of creating new label
-                    label.config(text="Light is " + ledState)
-                    root.update()  # update the GUI to show the new label text
+                # Read data from the serial port
+                data = ser.readline().decode().strip()
 
-    startButton = tk.Button(root, text="Start", font=('Arial', 18), command=start)
-    startButton.pack()
+                if data:
+                    if data == 'ON':
+                        lightStatus.config(text='Poultry light is ON')
+                    elif data == 'OFF':
+                        lightStatus.config(text='Poultry light is OFF')
+                    elif data == 'Turning':
+                        feedingStatus.config(text='Feeding')
+                    elif data == 'Done':
+                        feedingStatus.config(text='Done Feeding')
+                    elif data == "":
+                        lightStatus.config(text='No data for lighting')
+                        feedingStatus.config(text='No data for the feeding')
+                root.update()
+
+    button = tk.Button(root, text='Monitor', font=('Times New Roman', 25, 'bold'), command=start)
+    button.pack(pady=30)
+
+    lightLabel = tk.Label(root, text="Lighting Status", font=('Times New Roman', 25, 'bold'), borderwidth=5, relief="ridge")
+    lightLabel.pack(side='left', padx=55)
+    lightStatus = tk.Label(root, text="", font=('Times New Roman', 18))
+    lightStatus.pack(side='left', pady=78)
+
+    feedingLabel = tk.Label(root, text="Feeding Status", font=('Times New Roman', 25, 'bold'), borderwidth=5, relief="ridge")
+    feedingLabel.pack(side="right", padx=55, pady=75)
+    feedingStatus = tk.Label(root, text="", font=('Times New Roman', 18))
+    feedingStatus.pack(side='right', padx=55, pady=90)
+
+
+    root.mainloop()
